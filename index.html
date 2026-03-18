@@ -90,7 +90,7 @@
     <button class="fb" data-license="rf" style="color:#22c55e;border-color:#22c55e55">RF</button>
     <button class="fb" data-license="ed" style="color:#f59e0b;border-color:#f59e0b55">Editorial</button>
     <div class="divider"></div>
-    <button class="fb" data-mood="positive" style="color:#22c55e;border-color:#22c55e55" title="Hide stressed/upset/negative expressions">Positive Only</button>
+    <button class="fb on" data-mood="positive" style="color:#22c55e;border-color:#22c55e55" title="Hide stressed/upset/negative expressions">Positive Only</button>
     <div class="divider"></div>
     <div class="counter"><strong id="vc">0</strong> / <span id="tc">0</span> &middot; <strong id="sc0">0</strong> sel</div>
   </div>
@@ -228,7 +228,7 @@ const I=[
 {id:"gm1271215144",thumb:"https://media.istockphoto.com/id/1271215144/photo/smiling-female-entrepreneur-with-laptop-in-a-meeting-room.jpg?s=170667a&w=0&k=20&c=VioHE_E6xj-dqA9bxjoa386X1__DvlKVJI1uqFtI4ZM=",url:"https://www.istockphoto.com/photo/smiling-female-entrepreneur-with-laptop-in-a-meeting-room-gm1271215144-373887782",d:"Smiling female entrepreneur with laptop in meeting room",s:"Conference Room",r:"diverse",b:""},
 {id:"gm1449018106",thumb:"https://media.istockphoto.com/id/1449018106/photo/business-women-pointing-at-laptop-to-brainstorm-ideas.jpg?s=170667a&w=0&k=20&c=-b1Wtw6KMUP1B6MBq0xUwC9Dl6iZroa32nhRuS_qLDc=",url:"https://www.istockphoto.com/photo/business-women-pointing-at-laptop-to-brainstorm-ideas-gm1449018106-486332493",d:"Business women pointing at laptop brainstorming ideas",s:"Corporate Office",r:"diverse",b:""},
 // ── ROUND 5: KOREAN ──────────────────────────────
-{id:"gm2148293982",thumb:"https://media.istockphoto.com/id/2148293982/photo/surprised-korean-man-spreading-arms-while-sitting-in-front-of-personal-laptop-at-desk-in-well.jpg?s=170667a&w=0&k=20&c=y8E2NV20cWC0ZyU8PHhJ-gKcUhpTAe5BXcNnicA-kuo=",url:"https://www.istockphoto.com/photo/surprised-korean-man-spreading-arms-while-sitting-in-front-of-personal-laptop-at-gm2148293982-569394676",d:"Korean man at desk with laptop in well-lit office",s:"Corporate Office",r:"korean",b:""},
+{id:"gm2148293982",m:"neg",thumb:"https://media.istockphoto.com/id/2148293982/photo/surprised-korean-man-spreading-arms-while-sitting-in-front-of-personal-laptop-at-desk-in-well.jpg?s=170667a&w=0&k=20&c=y8E2NV20cWC0ZyU8PHhJ-gKcUhpTAe5BXcNnicA-kuo=",url:"https://www.istockphoto.com/photo/surprised-korean-man-spreading-arms-while-sitting-in-front-of-personal-laptop-at-gm2148293982-569394676",d:"Korean man at desk with laptop in well-lit office",s:"Corporate Office",r:"korean",b:""},
 {id:"gm1082271486",m:"neg",thumb:"https://media.istockphoto.com/id/1082271486/photo/young-stressed-and-frustrated-asian-korean-student-girl-working-hard-with-laptop-computer-and.jpg?s=170667a&w=0&k=20&c=bNXte6VZsSommgA9HYAF7iTot9I5H7Sry74FqpFQa1Y=",url:"https://www.istockphoto.com/photo/young-stressed-and-frustrated-asian-korean-student-girl-working-hard-with-laptop-gm1082271486-290241196",d:"Young Korean student working with laptop and books",s:"Home Office",r:"korean",b:""},
 {id:"gm981326758",m:"neg",thumb:"https://media.istockphoto.com/id/981326758/photo/young-pretty-scared-and-overwhelmed-asian-korean-woman-looking-stressed-at-laptop-computer.jpg?s=170667a&w=0&k=20&c=jMIdqhYf1xfpgljiavSX1NqU_E8QmrbAgJxXzMriHpg=",url:"https://www.istockphoto.com/photo/young-pretty-scared-and-overwhelmed-asian-korean-woman-looking-stressed-at-laptop-gm981326758-266525005",d:"Young Korean woman at laptop computer",s:"Home Office",r:"korean",b:""},
 // ── ROUND 5: SE ASIAN / APAC ─────────────────────
@@ -333,7 +333,7 @@ const I=[
 {id:"gm475569864",v:"check",thumb:"https://media.istockphoto.com/id/475569864/photo/lets-action-that-plan.jpg?s=170667a&w=0&k=20&c=tPODApHDjr38IVuSDIpdzBA9XrCyEmzzCerb_aVATrM=",url:"https://www.istockphoto.com/photo/lets-action-that-plan-gm475569864-66029971",d:"Japanese creative team discussing project on laptop",s:"Conference Room",r:"japanese",b:""},
 {id:"gm1002237834",v:"check",thumb:"https://media.istockphoto.com/id/1002237834/photo/young-fashion-business-woman-using-laptop-at-sidewalk-cafe.jpg?s=170667a&w=0&k=20&c=kswktpA6DcjURysL_EPHWkTfI9cFuLeKgUj9_NSw4-8=",url:"https://www.istockphoto.com/photo/young-fashion-business-woman-using-laptop-at-sidewalk-cafe-gm1002237834-270855504",d:"Young business woman using laptop at sidewalk cafe",s:"Coffee Shop",r:"diverse",b:""},
 ];
-let aR='all',aV='all',aL='all',aMood=false;const sel=new Set();
+let aR='all',aV='all',aL='all',aMood=true;const sel=new Set();
 function render(){
   const g=document.getElementById('grid');g.innerHTML='';let v=0,pc=0,cs='';
   const order=["japanese","chinese","indian","apac","diverse"];
