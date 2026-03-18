@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WMB — PC Search</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',-apple-system,sans-serif;background:#0a0a0a;color:#e5e5e5;min-height:100vh;padding-bottom:60px}
+  .top-bar{position:sticky;top:0;z-index:100;background:rgba(17,17,17,.95);border-bottom:1px solid #222;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;backdrop-filter:blur(12px)}
+  .top-bar h1{font-size:14px;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
+  .top-bar h1 span{color:#555;font-weight:400}
+  .controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .fb{padding:4px 10px;border-radius:4px;border:1px solid #2a2a2a;background:transparent;color:#666;font-size:11px;font-family:inherit;cursor:pointer;transition:all .15s}
+  .fb:hover{border-color:#444;color:#bbb}
+  .fb.on{background:#fff;color:#000;border-color:#fff}
+  .fb[data-region].on{background:#7c8cf5;border-color:#7c8cf5;color:#fff}
+  .divider{width:1px;height:18px;background:#2a2a2a}
+  .counter{font-size:11px;color:#555}.counter strong{color:#ccc}
+  .browse-bar{padding:8px 24px;background:#0d0d0d;border-bottom:1px solid #151515;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .browse-bar .label{font-size:9px;color:#444;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-right:2px}
+  .browse-bar a{font-size:10px;color:#555;text-decoration:none;padding:2px 7px;border:1px solid #1a1a1a;border-radius:3px}
+  .browse-bar a:hover{color:#999;border-color:#333}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1px;padding:1px}
+  .sh{grid-column:1/-1;padding:24px 20px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#444;border-top:1px solid #151515}
+  .sh:first-child{border-top:none}
+  .card{background:#111;overflow:hidden;position:relative;cursor:pointer}
+  .card.hidden{display:none}
+  .card.selected{outline:2px solid #fff;outline-offset:-2px}
+  .card .iw{position:relative;width:100%;aspect-ratio:3/2;background:#0a0a0a;overflow:hidden}
+  .card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+  .card:hover img{transform:scale(1.03)}
+  .badge{position:absolute;top:6px;left:6px;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:rgba(34,197,94,.9);color:#000;backdrop-filter:blur(8px)}
+  .badge.branded{background:rgba(124,140,245,.9);color:#fff}
+  .badge.check{background:rgba(245,158,11,.85);color:#000}
+  .badge.fail{background:rgba(239,68,68,.9);color:#fff}
+  .card.check-card{opacity:.7}.card.check-card:hover{opacity:1}
+  .chk{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+  .card.selected .chk{background:#fff;border-color:#fff}
+  .chk svg{opacity:0}.card.selected .chk svg{opacity:1}
+  .ci{padding:8px 10px;display:flex;flex-direction:column;gap:4px}
+  .ci .d{font-size:11px;font-weight:500;line-height:1.3;color:#bbb;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .cm{display:flex;gap:3px;flex-wrap:wrap}
+  .t{font-size:9px;padding:1px 5px;border-radius:2px;background:#1a1a1a;color:#555}
+  .t.r{background:#161625;color:#7c8cf5}.t.s{background:#162016;color:#6bc46b}.t.b{background:#251616;color:#f57c7c;font-weight:600}
+  .ci .reason{font-size:9px;color:#333;line-height:1.3}
+  .ci a{font-size:9px;color:#333;text-decoration:none}.ci a:hover{color:#777;text-decoration:underline}
+  .xbar{position:fixed;bottom:0;left:0;right:0;background:rgba(17,17,17,.95);border-top:1px solid #333;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;transform:translateY(100%);transition:transform .25s;z-index:100;backdrop-filter:blur(12px)}
+  .xbar.vis{transform:translateY(0)}
+  .xbar .info{font-size:12px;color:#999}.xbar .info strong{color:#fff}
+  .xbtn{padding:6px 16px;border-radius:4px;border:none;background:#fff;color:#000;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer}
+  .xbtn:hover{background:#ddd}
+  .xbtn.cl{background:transparent;color:#777;border:1px solid #333;margin-right:6px}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:40px;backdrop-filter:blur(4px)}
+  .modal-overlay.open{display:flex}
+  .modal{background:#1a1a1a;border-radius:10px;max-width:700px;width:100%;max-height:80vh;overflow:auto;padding:20px}
+  .modal h2{font-size:14px;font-weight:600;margin-bottom:12px}
+  .modal .ll{list-style:none;padding:0}
+  .modal .ll li{padding:8px 0;border-bottom:1px solid #222}
+  .modal .ll li:last-child{border-bottom:none}
+  .modal .ll .ld{font-size:11px;color:#999;margin-bottom:3px}
+  .modal .ll .lm{font-size:9px;color:#555;margin-bottom:3px}
+  .modal .ll a{font-size:11px;color:#7c8cf5;text-decoration:none;word-break:break-all}
+  .modal .ll a:hover{text-decoration:underline}
+  .modal .acts{display:flex;gap:6px;margin-top:14px}
+  .modal .acts button{padding:6px 12px;border-radius:4px;border:1px solid #333;background:transparent;color:#777;font-family:inherit;font-size:11px;cursor:pointer}
+  .modal .acts button.pri{background:#fff;color:#000;border-color:#fff}
+  .toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#22c55e;color:#000;padding:6px 18px;border-radius:5px;font-size:11px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <h1>PC Search <span>/ <span id="pass-count">0</span> Confirmed PCs</span></h1>
+  <div class="controls">
+    <button class="fb on" data-verdict="all">All</button>
+    <button class="fb" data-verdict="pass" style="color:#22c55e;border-color:#22c55e55">PC</button>
+    <button class="fb" data-verdict="check" style="color:#f59e0b;border-color:#f59e0b55">Check</button>
+    <div class="divider"></div>
+    <button class="fb on" data-region="all">All</button>
+    <button class="fb" data-region="japanese">JP</button>
+    <button class="fb" data-region="chinese">CN</button>
+    <button class="fb" data-region="indian">IN</button>
+    <button class="fb" data-region="apac">APAC</button>
+    <button class="fb" data-region="diverse">Diverse</button>
+    <div class="divider"></div>
+    <div class="counter"><strong id="vc">0</strong> / <span id="tc">0</span> &middot; <strong id="sc0">0</strong> sel</div>
+  </div>
+</div>
+<div class="browse-bar">
+  <span class="label">iStock:</span>
+  <a href="https://www.istockphoto.com/photos/dell-laptop" target="_blank">Dell</a>
+  <a href="https://www.istockphoto.com/photos/lenovo-thinkpad" target="_blank">ThinkPad</a>
+  <a href="https://www.istockphoto.com/photos/hp-laptop" target="_blank">HP</a>
+  <a href="https://www.istockphoto.com/photos/microsoft-surface" target="_blank">Surface</a>
+  <a href="https://www.istockphoto.com/photos/asus" target="_blank">ASUS</a>
+  <a href="https://www.istockphoto.com/photos/windows-laptop" target="_blank">Windows</a>
+  <span class="label" style="margin-left:6px">Region:</span>
+  <a href="https://www.istockphoto.com/photos/japanese-man-on-laptop" target="_blank">JP</a>
+  <a href="https://www.istockphoto.com/photos/indian-businessman-laptop" target="_blank">IN</a>
+  <a href="https://www.istockphoto.com/photos/chinese-business-woman-laptop" target="_blank">CN</a>
+</div>
+<div class="grid" id="grid"></div>
+<div class="xbar" id="xbar">
+  <div class="info"><strong id="sc">0</strong> selected</div>
+  <div>
+    <button class="xbtn cl" onclick="clearSel()">Clear</button>
+    <button class="xbtn" onclick="exportSel()">Export</button>
+  </div>
+</div>
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <h2 id="mt">Selected</h2>
+    <ul class="ll" id="ml"></ul>
+    <div class="acts">
+      <button onclick="copyLinks()">Copy Links</button>
+      <button onclick="copyCSV()">Copy CSV</button>
+      <button class="pri" onclick="document.getElementById('modal').classList.remove('open')">Done</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const I=[
+// ── JAPANESE ──────────────────────────────────────
+{id:"gm584611422",thumb:"https://media.istockphoto.com/id/584611422/photo/man-sat-cross-legged-using-a-laptop.jpg?s=170667a&w=0&k=20&c=HiTG0JvZYobClb29hPpnCOn5xUTZbd7yDl8ebEqD0fg=",url:"https://www.istockphoto.com/photo/man-sat-cross-legged-using-a-laptop-gm584611422-100136695",d:"Man using laptop cross-legged in Japanese room, Kyoto",s:"Home Office",r:"japanese",b:""},
+{id:"gm545576558",thumb:"https://media.istockphoto.com/id/545576558/photo/japanese-people-using-laptop-computer-and-tablet-computer.jpg?s=170667a&w=0&k=20&c=fSeyxtq1ei0Au8rFWWF0yoU_Keztr-dFKkzHjhRfj80=",url:"https://www.istockphoto.com/photo/japanese-people-using-laptop-computer-and-tablet-computer-gm545576558-98378025",d:"Japanese people using laptop and tablet computers",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm910563108",thumb:"https://media.istockphoto.com/id/910563108/photo/plan-for-the-project-in-the-japanese-office.jpg?s=170667a&w=0&k=20&c=t1wS0JWYzvrnpBlZb-zkhyyfJrq7MiUy2si69ARUCBM=",url:"https://www.istockphoto.com/photo/plan-for-the-project-in-the-japanese-office-gm910563108-250760770",d:"Men and women planning project in offices, Okinawa Japan",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm2090410308",thumb:"https://media.istockphoto.com/id/2090410308/photo/business-person-working-in-office.jpg?s=170667a&w=0&k=20&c=TR1Tx-dwqA4Lif0HrfNJASOzf5syQIjsUBuzKq_lmmk=",url:"https://www.istockphoto.com/photo/business-person-working-in-office-gm2090410308-565792427",d:"Japanese business person working in office",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm1465787743",thumb:"https://media.istockphoto.com/id/1465787743/photo/successful-mature-asian-working-inside-office-using-laptop-man-typing-on-keyboard-and-smiling.jpg?s=170667a&w=0&k=20&c=Gne3ldNAHAp3YMNeva_Ge9p3REU3v-OPmMleW1VZQMM=",url:"https://www.istockphoto.com/photo/successful-mature-asian-working-inside-office-using-laptop-man-typing-on-keyboard-gm1465787743-498098340",d:"Mature Asian man typing on laptop in office, smiling",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm1365334437",thumb:"https://media.istockphoto.com/id/1365334437/photo/senior-asian-business-man-working-on-laptop-online-smiling-and-rejoicing-happy-boss-business.jpg?s=170667a&w=0&k=20&c=jtE1POCdCT53g9f1ba-iAvvkgAUAjuNFxqUC2rz2ZjQ=",url:"https://www.istockphoto.com/photo/senior-asian-business-man-working-on-laptop-online-smiling-and-rejoicing-happy-boss-gm1365334437-436230222",d:"Senior Asian businessman working on laptop, smiling, happy boss in office",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm1434629867",thumb:"https://media.istockphoto.com/id/1434629867/photo/thinking-asian-financier-in-glasses-accountant-working-with-documents-and-accounts-using.jpg?s=170667a&w=0&k=20&c=SSnuNN7u3X6TVxqdgaxz8D-NPGk8JbQbsq-knaz5s0o=",url:"https://www.istockphoto.com/photo/thinking-asian-financier-in-glasses-accountant-working-with-documents-and-accounts-gm1434629867-476193726",d:"Asian financier in glasses using laptop at desk in office",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm936031842",thumb:"https://media.istockphoto.com/id/936031842/photo/young-businessman-working-in-co-working-space.jpg?s=170667a&w=0&k=20&c=nK_w0kx55y_ZlTNSPoKLt8FisaKD4ObcOFPfgnuc5j0=",url:"https://www.istockphoto.com/photo/young-businessman-working-in-co-working-space-gm936031842-256060648",d:"Young Asian businessman in co-working space, Tokyo Japan",s:"Open Plan",r:"japanese",b:""},
+{id:"gm608531376",thumb:"https://media.istockphoto.com/id/608531376/photo/portrait-of-young-asian-entrepreneur.jpg?s=170667a&w=0&k=20&c=sJbmC_rFBr8gMS5u_BqG66Ho0c2NltlU1lYkaJhTSVk=",url:"https://www.istockphoto.com/photo/portrait-of-young-asian-entrepreneur-gm608531376-104337123",d:"Young Asian entrepreneur standing in office with laptop under arm",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm1473639555",thumb:"https://media.istockphoto.com/id/1473639555/photo/young-asian-businessman-working-at-coffee-shop.jpg?s=170667a&w=0&k=20&c=P4lwTPw7zN3GQ5aIKjQ8E4A47R5jfqejNpuW28XHxcQ=",url:"https://www.istockphoto.com/photo/young-asian-businessman-working-at-coffee-shop-gm1473639555-503718249",d:"Young Asian businessman working at coffee shop with laptop",s:"Coffee Shop",r:"japanese",b:""},
+{id:"gm1450340186",thumb:"https://media.istockphoto.com/id/1450340186/photo/serious-thinking-asian-businessman-working-inside-modern-office-mature-man-in-shirt-and.jpg?s=170667a&w=0&k=20&c=gh9wv6wrvK7SKNJKwApfN7G_p9dW40IlRH5Ky37I8Ds=",url:"https://www.istockphoto.com/photo/serious-thinking-asian-businessman-working-inside-modern-office-mature-man-in-shirt-gm1450340186-487279320",d:"Mature Asian businessman using laptop in modern office, glasses",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm1335723645",thumb:"https://media.istockphoto.com/id/1335723645/photo/a-young-man-using-a-laptop-in-a-casual-room.jpg?s=170667a&w=0&k=20&c=UCM624c_G_dEkS5Z7UsVOPnxYvYWV4wh7N2YzvElD-4=",url:"https://www.istockphoto.com/photo/a-young-man-using-a-laptop-in-a-casual-room-gm1335723645-417291227",d:"Young Japanese man using gold/champagne laptop in casual room",s:"Home Office",r:"japanese",b:""},
+// ── CHINESE ──────────────────────────────────────
+{id:"gm153241320",thumb:"https://media.istockphoto.com/id/153241320/photo/young-chinese-man-sitting-at-desk-using-laptop.jpg?s=612x612&w=0&k=20&c=T-PYNtQxJuh5JDsE8w7Bhc8UkU6f5ZxBFtJEanDj8qM=",url:"https://www.istockphoto.com/photo/young-chinese-man-sitting-at-desk-using-laptop-gm153241320-21575633",d:"Young Chinese man at desk using laptop, smiling",s:"Home Office",r:"chinese",b:""},
+{id:"gm1341570412",thumb:"https://media.istockphoto.com/id/1341570412/photo/home-office-of-asian-senior-elderly-business-man-working-online-with-laptop-computer-mature.jpg?s=612x612&w=0&k=20&c=SO4cMfai3AZ_5eSeNeHhwE95TgNBltH_bqvLmyUN7-8=",url:"https://www.istockphoto.com/photo/home-office-of-asian-senior-elderly-business-man-working-online-with-laptop-computer-gm1341570412-421267559",d:"Senior Chinese businessman working from home, laptop + video call",s:"Home Office",r:"chinese",b:""},
+{id:"gm1278100115",thumb:"https://media.istockphoto.com/id/1278100115/photo/portrait-of-smiling-pretty-young-asian-business-woman-working-on-laptop-at-office-while.jpg?s=612x612&w=0&k=20&c=Mx3RUkSYz_5QYmy4a2uG4sYYiflKmZ2kzBE9ejVh0qc=",url:"https://www.istockphoto.com/photo/portrait-of-smiling-pretty-young-asian-business-woman-working-on-laptop-at-office-gm1278100115-377141862",d:"Chinese businesswoman on dark laptop at modern office, holding phone",s:"Corporate Office",r:"chinese",b:""},
+{id:"gm526533419",thumb:"https://media.istockphoto.com/id/526533419/photo/boy-and-girl-discussing-things-on-laptop.jpg?s=612x612&w=0&k=20&c=RL6sYID4TMuvpORRaEHDDuo2TvTCmEty_GUEmOzdbjY=",url:"https://www.istockphoto.com/photo/boy-and-girl-discussing-things-on-laptop-gm526533419-53293462",d:"Chinese man and woman discussing on black laptop together",s:"Open Plan",r:"chinese",b:""},
+{id:"gm637924348",thumb:"https://media.istockphoto.com/id/637924348/photo/businessman-talking-in-group-office-meeting.jpg?s=612x612&w=0&k=20&c=T9sok73Sbds77kKDwuqKFLQAN8q5w-ebqNP-acAhEqE=",url:"https://www.istockphoto.com/photo/businessman-talking-in-group-office-meeting-gm637924348-114060183",d:"Chinese businessman in group meeting with dark laptop open",s:"Conference Room",r:"chinese",b:""},
+{id:"gm1166013662",thumb:"https://media.istockphoto.com/id/1166013662/photo/asian-businessman-get-stress-and-thinking-when-working-with-laptop-on-desk-at-modern-office.jpg?s=612x612&w=0&k=20&c=AhsnFbKDjA9hZ-xX899ElmQvk6afKp955wCwIpwOqxs=",url:"https://www.istockphoto.com/photo/asian-businessman-get-stress-and-thinking-when-working-with-laptop-on-desk-at-modern-gm1166013662-321037727",d:"Asian businessman at modern office desk with silver laptop, blue shirt",s:"Corporate Office",r:"chinese",b:""},
+{id:"gm1260743477",thumb:"https://media.istockphoto.com/id/1260743477/photo/asian-woman-college-student-using-a-laptop-computer-to-study-remotely-at-a-cafe.jpg?s=612x612&w=0&k=20&c=4MQ2E3Ny5qJ7mmA7Vr5kyaN-49TVbnvsmqls43LGGcE=",url:"https://www.istockphoto.com/photo/asian-woman-college-student-using-a-laptop-computer-to-study-remotely-at-a-cafe-gm1260743477-369177472",d:"Asian woman using dark laptop at cafe, glasses, coffee on table",s:"Coffee Shop",r:"chinese",b:""},
+{id:"gm1319364950",thumb:"https://media.istockphoto.com/id/1319364950/photo/top-view-of-business-woman-talking-about-sale-report-in-video-conference-asian-team-using.jpg?s=612x612&w=0&k=20&c=NvbbUMEj1ryXZrA0VXjDXiuRE5iY-pTiZb7_Emud6MQ=",url:"https://www.istockphoto.com/photo/top-view-of-business-woman-talking-about-sale-report-in-video-conference-asian-team-gm1319364950-406249987",d:"Top view — Asian businesswoman on video conference with laptop",s:"Home Office",r:"chinese",b:""},
+{id:"gm2212724359",thumb:"https://media.istockphoto.com/id/2212724359/photo/photo-of-young-cheerful-programmer-chinese-woman-pointing-finger-her-new-hp-netbook-modern.jpg?s=612x612&w=0&k=20&c=82Z5GmbR-LKa3HaG-Vuy16LhTz7rY_8v8T8NQv3iOn0=",url:"https://www.istockphoto.com/photo/gm2212724359",d:"Chinese woman programmer with HP netbook",s:"Corporate Office",r:"chinese",b:"HP"},
+// ── INDIAN / SOUTH ASIAN ─────────────────────────
+{id:"gm1314904268",thumb:"https://media.istockphoto.com/id/1314904268/photo/happy-smiling-ethnical-indian-businessman-having-online-virtual-meeting-call-on-laptop.jpg?s=612x612&w=0&k=20&c=Q57DRgHXXu1Y-ke09LrfrFZs-XStTcGK5CJrOQKk-yg=",url:"https://www.istockphoto.com/photo/happy-smiling-ethnical-indian-businessman-having-online-virtual-meeting-call-on-gm1314904268-403013084",d:"Indian businessman having virtual meeting on laptop in coworking office",s:"Open Plan",r:"indian",b:""},
+{id:"gm1806223377",thumb:"https://media.istockphoto.com/id/1806223377/photo/portrait-of-young-successful-indian-businessman-financier-man-smiling-and-looking-at-camera.jpg?s=612x612&w=0&k=20&c=LrxOAfH84LfJgGqkCKYUfDCaIyZIkMQxGriBA0KyKNA=",url:"https://www.istockphoto.com/photo/portrait-of-young-successful-indian-businessman-financier-man-smiling-and-looking-at-gm1806223377-548908796",d:"Young successful Indian businessman using laptop at office desk",s:"Corporate Office",r:"indian",b:""},
+{id:"gm1434688191",thumb:"https://media.istockphoto.com/id/1434688191/photo/thinking-hindu-businessman-in-glasses-male-programmer-developer-working-inside-office-of.jpg?s=612x612&w=0&k=20&c=pLIYr5vVld6nJ4Q48YM-4rTx1bP0pQKBiAmsjObVgew=",url:"https://www.istockphoto.com/photo/thinking-hindu-businessman-in-glasses-male-programmer-developer-working-inside-gm1434688191-476238869",d:"Hindu programmer/developer using laptop in office",s:"Corporate Office",r:"indian",b:""},
+{id:"gm1448167415",thumb:"https://media.istockphoto.com/id/1448167415/photo/smiling-indian-businessman-in-suit-and-glasses-with-laptop-near-office-building.jpg?s=612x612&w=0&k=20&c=vuUgcc-IlZewhnRm7yNOIuEfAvTnyJdMsPbnvkAnZjc=",url:"https://www.istockphoto.com/photo/smiling-indian-businessman-in-suit-and-glasses-with-laptop-near-office-building-gm1448167415-485770889",d:"Indian businessman in suit with laptop near office building",s:"Corporate Office",r:"indian",b:""},
+{id:"gm1354244046",thumb:"https://media.istockphoto.com/id/1354244046/photo/cheerful-indian-guy-businessman-with-laptop-having-phone-conversation.jpg?s=612x612&w=0&k=20&c=ZR9FMap-MCkV6smqKi9i2nUYkj9R9c2Pc1zKm-MwRtQ=",url:"https://www.istockphoto.com/photo/cheerful-indian-guy-businessman-with-laptop-having-phone-conversation-gm1354244046-429124548",d:"Indian businessman with laptop having phone conversation",s:"Corporate Office",r:"indian",b:""},
+{id:"gm2193647630",thumb:"https://media.istockphoto.com/id/2193647630/photo/indian-businesswoman-working-on-laptop-in-modern-office.jpg?s=612x612&w=0&k=20&c=Fqgc_2kCMMCPIU-bNWVsq7z3hZ3gUNIKXbQwK24uUN4=",url:"https://www.istockphoto.com/photo/indian-businesswoman-working-on-laptop-in-modern-office-gm2193647630-611870886",d:"Indian businesswoman working on laptop in modern office",s:"Corporate Office",r:"indian",b:""},
+{id:"gm2223235819",thumb:"https://media.istockphoto.com/id/2223235819/photo/indian-entrepreneur-manager-businesswoman-using-pc-for-communication-learning-at-workplace.jpg?s=612x612&w=0&k=20&c=kMxDT_NY9WaF73kSAZzLaqgV9wIq1C8j9hpTQKgwoAA=",url:"https://www.istockphoto.com/photo/indian-entrepreneur-manager-businesswoman-using-pc-for-communication-learning-at-gm2223235819-639456990",d:"Indian businesswoman using PC at workplace (title says 'using PC')",s:"Corporate Office",r:"indian",b:"PC"},
+{id:"gm1387743679",thumb:"https://media.istockphoto.com/id/1387743679/photo/happy-young-female-indian-employee-working-on-computer.jpg?s=612x612&w=0&k=20&c=PHFGCRy0MxE2q2p8CpVEc6cDsjimhMnB_2ICyUW3oz8=",url:"https://www.istockphoto.com/photo/happy-young-female-indian-employee-working-on-computer-gm1387743679-445595632",d:"Happy young Indian woman working on computer in office",s:"Corporate Office",r:"indian",b:""},
+{id:"gm1396321418",thumb:"https://media.istockphoto.com/id/1396321418/photo/focused-indian-businesswoman-writing-in-a-notebook-while-working-alone-on-a-laptop-in-an.jpg?s=612x612&w=0&k=20&c=aod8Nmi9Va_zV8jx9Dh7IkH5jAwi74dUBMTQflqf0ok=",url:"https://www.istockphoto.com/photo/focused-indian-businesswoman-writing-in-a-notebook-while-working-alone-on-a-laptop-gm1396321418-451116934",d:"Focused Indian businesswoman with notebook and laptop in office",s:"Corporate Office",r:"indian",b:""},
+{id:"gm1187304458",thumb:"https://media.istockphoto.com/id/1187304458/photo/young-asian-business-man-working-with-laptop-computer-while-sitting-in-coffee-shop-cafe.jpg?s=612x612&w=0&k=20&c=IZeNR3n5T9-1R2VURKVeC1gUfcwyyQAMWUIe1NMGrzE=",url:"https://www.istockphoto.com/photo/young-asian-business-man-working-with-laptop-computer-while-sitting-in-coffee-shop-gm1187304458-335333618",d:"South Asian businessman working with laptop at coffee shop",s:"Coffee Shop",r:"indian",b:""},
+{id:"gm2150283112",thumb:"https://media.istockphoto.com/id/2150283112/photo/diverse-business-people-in-modern-office-looking-at-laptop-and-planning-investment.jpg?s=612x612&w=0&k=20&c=uS2jk71PFk8lbeFiuuMiCsAVxDxj87ZGY4ZHcgVNMZk=",url:"https://www.istockphoto.com/photo/diverse-business-people-in-modern-office-looking-at-laptop-and-planning-investment-gm2150283112-571460595",d:"Diverse team with Indian colleagues at laptop, planning investment",s:"Conference Room",r:"indian",b:""},
+{id:"gm2153931467",thumb:"https://media.istockphoto.com/id/2153931467/photo/indian-happy-young-adult-gen-z-man-male-sitting-chair-wear-headphone-do-work-talk-online.jpg?s=170667a&w=0&k=20&c=Qt72xfvL9qqj5u_xm7oBIv21XKImoWsdKpPZtKLRlV8=",url:"https://www.istockphoto.com/photo/indian-happy-young-adult-gen-z-man-male-sitting-chair-wear-headphone-do-work-talk-gm2153931467-574836371",d:"Indian Gen Z man with headphones working on laptop in office",s:"Open Plan",r:"indian",b:""},
+{id:"gm1284865047",thumb:"https://media.istockphoto.com/id/1284865047/photo/indian-man-with-headset-and-laptop-working-at-home.jpg?s=170667a&w=0&k=20&c=PiX9zQZUgxmmvgFQSh0JJ3p3fa-LplP_tmVAJe-Y-_s=",url:"https://www.istockphoto.com/photo/indian-man-with-headset-and-laptop-working-at-home-gm1284865047-381870652",d:"Indian man with headset and laptop working at home",s:"Home Office",r:"indian",b:""},
+// ── DIVERSE / MOBILE ─────────────────────────────
+{id:"gm1177168531",thumb:"https://media.istockphoto.com/id/1177168531/photo/diverse-colleagues-watching-content-on-laptop-together.jpg?s=170667a&w=0&k=20&c=mMntg5lrnK4rybNaaoXk8p7_8vxuaqcQ_ZEIjNdkzhU=",url:"https://www.istockphoto.com/photo/diverse-colleagues-watching-content-on-laptop-together-gm1177168531-328520761",d:"Diverse colleagues watching content on laptop together in office",s:"Corporate Office",r:"diverse",b:""},
+{id:"gm1408477301",thumb:"https://media.istockphoto.com/id/1408477301/photo/diverse-office-employees-concept-focused-man-with-a-dreadlocks-wearing-wireless-headset-is.jpg?s=170667a&w=0&k=20&c=9FYN_itbqsHOz47yFwaZTQ2sj8TOl33a9rw3UWOSIGM=",url:"https://www.istockphoto.com/photo/diverse-office-employees-concept-focused-man-with-a-dreadlocks-wearing-wireless-gm1408477301-459325019",d:"Man with dreadlocks using laptop for video call in office",s:"Corporate Office",r:"diverse",b:""},
+{id:"gm660678662",thumb:"https://media.istockphoto.com/id/660678662/photo/two-business-executives-working-on-laptop.jpg?s=170667a&w=0&k=20&c=X1P-0Cr_Mp9f_DXECtAPE0kgBZMADdVTQPqJcCvw7yY=",url:"https://www.istockphoto.com/photo/two-business-executives-working-on-laptop-gm660678662-120498049",d:"Two business executives working on laptop, standing",s:"Corporate Office",r:"diverse",b:""},
+{id:"gm1227397649",thumb:"https://media.istockphoto.com/id/1227397649/photo/serious-african-american-businessman-using-laptop-working-on-project.jpg?s=170667a&w=0&k=20&c=8USUnTq0XHLMpwxaQ9bDuJqwaDFNZ0Wr6uQfeYxohJY=",url:"https://www.istockphoto.com/photo/serious-african-american-businessman-using-laptop-working-on-project-gm1227397649-361984414",d:"African American businessman using laptop, working on project",s:"Corporate Office",r:"diverse",b:""},
+{id:"gm968608942",thumb:"https://media.istockphoto.com/id/968608942/photo/man-waits-for-train-in-train-station.jpg?s=170667a&w=0&k=20&c=nze1LKIN3jW1QEyyFHb9tMpqblKzkJ9st7tCV9XGKD4=",url:"https://www.istockphoto.com/photo/man-waits-for-train-in-train-station-gm968608942-264076922",d:"Asian man at train station holding laptop and smartphone",s:"Airport",r:"apac",b:""},
+{id:"gm1175317562",thumb:"https://media.istockphoto.com/id/1175317562/photo/businessman-constantly-working.jpg?s=170667a&w=0&k=20&c=o3OxDoOn3oewtSJ11gR9dbVxrJJTj-1Zut3Wmxh7Nrc=",url:"https://www.istockphoto.com/photo/businessman-constantly-working-gm1175317562-327250906",d:"Millennial man using laptop at cafe table, suit, focused",s:"Coffee Shop",r:"diverse",b:""},
+{id:"gm576607508",thumb:"https://media.istockphoto.com/id/576607508/photo/getting-work-done-from-the-hotel.jpg?s=170667a&w=0&k=20&c=-3ZKhFveJ8pk_2uWNng2DzqnUT0t745kxIz_yoLqgzY=",url:"https://www.istockphoto.com/photo/getting-work-done-from-the-hotel-gm576607508-99085133",d:"Businesswoman on hotel bed using laptop and tablet, business trip",s:"Airport",r:"diverse",b:""},
+{id:"gm840296706",thumb:"https://media.istockphoto.com/id/840296706/photo/attractive-guy-working-on-project.jpg?s=170667a&w=0&k=20&c=-OPin6LEK6kzra7SYtfdf_JOEuaL83ZykTtcek55QA4=",url:"https://www.istockphoto.com/photo/attractive-guy-working-on-project-gm840296706-136861089",d:"European professional doing paperwork, using laptop at office desk",s:"Corporate Office",r:"diverse",b:""},
+{id:"gm1369976640",thumb:"https://media.istockphoto.com/id/1369976640/photo/shot-of-a-young-businesswoman-working-on-her-laptop.jpg?s=170667a&w=0&k=20&c=tYDdPiqRXZnyfKJKHyOPhyW1xDQzAZtGFJ6jbEcCjfs=",url:"https://www.istockphoto.com/photo/shot-of-a-young-businesswoman-working-on-her-laptop-gm1369976640-439631884",d:"Young businesswoman working on laptop",s:"Airport",r:"diverse",b:""},
+// ── BRANDED — DELL ───────────────────────────────
+{id:"gm2260676610",thumb:"https://media.istockphoto.com/id/2260676610/photo/confident-business-professional-smiling-at-modern-desk-in-bright-office-setting.jpg?s=170667a&w=0&k=20&c=l4c-eNNHNmNqgPXGb6vMUm8j6lmppBeFUy7BlkGMmy4=",url:"https://www.istockphoto.com/photo/confident-business-professional-smiling-at-modern-desk-in-bright-office-setting-gm2260676610-673561236",d:"Business professional smiling at desk with Dell laptop",s:"Corporate Office",r:"diverse",b:"Dell"},
+{id:"gm2180964593",thumb:"https://media.istockphoto.com/id/2180964593/photo/focused-man-working-on-laptop-in-a-modern-workspace.jpg?s=170667a&w=0&k=20&c=f9-8MKmoENN52ukTbbT9Dpm0r1tPHDkHv8NsvQHIoyE=",url:"https://www.istockphoto.com/photo/focused-man-working-on-laptop-in-a-modern-workspace-gm2180964593-600034319",d:"Focused man working on Dell laptop in modern workspace",s:"Open Plan",r:"diverse",b:"Dell"},
+{id:"gm2162315002",thumb:"https://media.istockphoto.com/id/2162315002/photo/businessman-seated-outdoors-using-laptop-green-background.jpg?s=170667a&w=0&k=20&c=2i09V9Vsq2-k2NqOQD4QHiSvx5r_oGC8V4Ekz0Ut6eI=",url:"https://www.istockphoto.com/photo/businessman-seated-outdoors-using-laptop-green-background-gm2162315002-582715982",d:"Businessman seated outdoors using Dell laptop",s:"Coffee Shop",r:"diverse",b:"Dell"},
+{id:"gm1266598853",thumb:"https://media.istockphoto.com/id/1266598853/photo/multiple-computer-and-engineer.jpg?s=170667a&w=0&k=20&c=Ma_0j0tQ-B4gm49kxK82Y7P-D3EBeiU4dhWsuMckYT8=",url:"https://www.istockphoto.com/photo/multiple-computer-and-engineer-gm1266598853-371344032",d:"Engineer working with multiple Dell computers",s:"Corporate Office",r:"diverse",b:"Dell"},
+// ── BRANDED — HP ─────────────────────────────────
+{id:"gm2170632236",thumb:"https://media.istockphoto.com/id/2170632236/photo/photo-of-young-programmer-cheerful-brunet-hair-guy-hold-his-new-hp-elitebook-laptop-for.jpg?s=612x612&w=0&k=20&c=gcAlRqsmvcjCZFMITp-nnlgsyC_YXIMf8syCcfmf7ak=",url:"https://www.istockphoto.com/photo/gm2170632236",d:"Young programmer holding HP EliteBook laptop",s:"Corporate Office",r:"diverse",b:"HP"},
+{id:"gm2212745414",thumb:"https://media.istockphoto.com/id/2212745414/photo/photo-of-confident-satisfied-new-hp-probook-laptop-gadget-pensioner-business-lady-owner-like.jpg?s=612x612&w=0&k=20&c=Td6qr_8hLElbaXuAkEzEs83naUPyxfdOSNb-L1Hb9N8=",url:"https://www.istockphoto.com/photo/gm2212745414",d:"Senior business lady with HP ProBook laptop",s:"Corporate Office",r:"diverse",b:"HP"},
+{id:"gm2167225286",thumb:"https://media.istockphoto.com/id/2167225286/photo/photo-of-young-successful-it-company-developer-lady-hold-her-new-hp-laptop-online-corporate.jpg?s=612x612&w=0&k=20&c=InQmpb5wzqqHJ-KvfFY3qTNaycKNERrdeIH2NOYtC_o=",url:"https://www.istockphoto.com/photo/gm2167225286",d:"Young IT developer lady holding HP laptop",s:"Corporate Office",r:"diverse",b:"HP"},
+// ── BRANDED — LENOVO ─────────────────────────────
+{id:"gm458651553",thumb:"https://media.istockphoto.com/id/458651553/photo/lenovo-thinkpad-x200-tablet-notebook-computer.jpg?s=170667a&w=0&k=20&c=uzkLkHW21U6U1Je61zCdimKxT1bDtH1uIklkH_KXaKE=",url:"https://www.istockphoto.com/photo/lenovo-thinkpad-x200-tablet-notebook-computer-gm458651553-15737200",d:"Man using Lenovo ThinkPad X200 Tablet, TrackPoint visible",s:"Corporate Office",r:"diverse",b:"Lenovo"},
+{id:"gm2216313761",thumb:"https://media.istockphoto.com/id/2216313761/photo/young-man-working-from-home-on-his-lenovo-legion-laptop-is-having-a-bad-time.jpg?s=612x612&w=0&k=20&c=o4EXO2zza8G0wCMozushAL5T1jhnwGaZ-Ul8FSVW-GA=",url:"https://www.istockphoto.com/photo/gm2216313761",d:"Young man working from home on Lenovo Legion laptop",s:"Home Office",r:"diverse",b:"Lenovo"},
+{id:"gm2216313885",thumb:"https://media.istockphoto.com/id/2216313885/photo/young-man-working-from-home-using-a-lenovo-legion-laptop.jpg?s=612x612&w=0&k=20&c=2qT2XE7QuOn21qpNwHg_mk2mDhafaZSRz0ZNoIBS5mA=",url:"https://www.istockphoto.com/photo/gm2216313885",d:"Young man at home using Lenovo Legion laptop",s:"Home Office",r:"diverse",b:"Lenovo"},
+// ── BRANDED — SURFACE ────────────────────────────
+{id:"gm458338977",thumb:"https://media.istockphoto.com/id/458338977/photo/microsoft-surface-pro.jpg?s=170667a&w=0&k=20&c=dm_jivf064vs8Rc0BFGLGAqOvMYkJ5icpHLyNnWdkTU=",url:"https://www.istockphoto.com/photo/microsoft-surface-pro-gm458338977-27142388",d:"Man using Microsoft Surface Pro at park",s:"Coffee Shop",r:"diverse",b:"Surface"},
+// ── BRANDED — ASUS ───────────────────────────────
+{id:"gm1170757059",thumb:"https://media.istockphoto.com/id/1170757059/photo/asus-chromebook.jpg?s=170667a&w=0&k=20&c=SKJXWCRPMI9AdczgshzjZMdQSILYUOYyj8RJ52uWwEA=",url:"https://www.istockphoto.com/photo/asus-chromebook-gm1170757059-324089734",d:"Young businessman working on ASUS Chromebook in office",s:"Corporate Office",r:"apac",b:"ASUS"},
+{id:"gm1317708659",thumb:"https://media.istockphoto.com/id/1317708659/photo/asus-zenbook-duo-14-ux482.jpg?s=170667a&w=0&k=20&c=MEB4ZLeqFQu3sT3iX_WDwvypRlpgmKIvN5hao_Lz3y0=",url:"https://www.istockphoto.com/photo/asus-zenbook-duo-14-ux482-gm1317708659-405060866",d:"ASUS ZenBook Duo 14 dual-screen laptop",s:"Home Office",r:"apac",b:"ASUS"},
+// ── NEEDS CHECK — verify laptop is PC not Mac ────
+{id:"gm598668518",v:"check",thumb:"https://media.istockphoto.com/id/598668518/photo/two-japanese-business-people-in-office-using-laptop.jpg?s=170667a&w=0&k=20&c=Jyf92mQyyK6r6Jt9ayZY3vWu_ggh4E61Xm_JH8Xt8AQ=",url:"https://www.istockphoto.com/photo/two-japanese-business-people-in-office-using-laptop-gm598668518-102672509",d:"Two Japanese business people in office using laptop",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm1325045150",v:"check",thumb:"https://media.istockphoto.com/id/1325045150/photo/business-persons-working-in-an-office.jpg?s=170667a&w=0&k=20&c=9y-X9PI-Ra78mL30EYwO9CVB3YdSbyMY5wRWokIy3SI=",url:"https://www.istockphoto.com/photo/business-persons-working-in-an-office-gm1325045150-410188549",d:"Business persons working in a Japanese office",s:"Corporate Office",r:"japanese",b:""},
+{id:"gm1137014758",v:"check",thumb:"https://media.istockphoto.com/id/1137014758/photo/businessman-using-laptop-computer-in-the-office.jpg?s=170667a&w=0&k=20&c=-WNptDut-aRE6nShPSmz2onNBUnmpRGCsbY9lqDqSnM=",url:"https://www.istockphoto.com/photo/businessman-using-laptop-computer-in-the-office-gm1137014758-303024791",d:"Asian businessman typing on laptop at office desk",s:"Corporate Office",r:"apac",b:""},
+{id:"gm157725939",v:"check",thumb:"https://media.istockphoto.com/id/157725939/photo/portrait-of-young-chinese-businessman-in-office.jpg?s=170667a&w=0&k=20&c=q5gcg8wLsOK5GegRlSwUD9AZFhdovIH_W2EVBpwe1jQ=",url:"https://www.istockphoto.com/photo/portrait-of-young-chinese-businessman-in-office-gm157725939-18571610",d:"Portrait of young Chinese businessman in office",s:"Corporate Office",r:"chinese",b:""},
+{id:"gm1083827686",v:"check",thumb:"https://media.istockphoto.com/id/1083827686/photo/smiling-indian-female-employee-using-laptop-at-workplace.jpg?s=170667a&w=0&k=20&c=RQ-rd-R0AMZtL8BoV2pkDH_ZKV-WU55Fp2WqPQDsNII=",url:"https://www.istockphoto.com/photo/smiling-indian-female-employee-using-laptop-at-workplace-gm1083827686-290776915",d:"Smiling Indian female employee using laptop at workplace",s:"Corporate Office",r:"indian",b:""},
+{id:"gm1213186875",v:"check",thumb:"https://media.istockphoto.com/id/1213186875/photo/an-asian-indian-white-collar-worker-sitting-on-her-workstation-using-laptop-working-for-her.jpg?s=170667a&w=0&k=20&c=DHfuqbyiXg74BPhbxlWBiDt2LmO7-Bmk8vlqdS0sW6w=",url:"https://www.istockphoto.com/photo/an-asian-indian-white-collar-worker-sitting-on-her-workstation-using-laptop-working-gm1213186875-352465550",d:"Indian white collar worker at workstation using laptop",s:"Corporate Office",r:"indian",b:""},
+{id:"gm1659497466",v:"check",thumb:"https://media.istockphoto.com/id/1659497466/photo/confident-asian-businessman-ceo-in-black-suit-holding-laptop-walking-around-office-looking.jpg?s=170667a&w=0&k=20&c=yIUadGiAzTqwtjGRAKN5hLtSTTx6OxT0QjQhunK22m4=",url:"https://www.istockphoto.com/photo/confident-asian-businessman-ceo-in-black-suit-holding-laptop-walking-around-office-gm1659497466-534846580",d:"Confident Asian businessman CEO holding laptop walking in office",s:"Corporate Office",r:"apac",b:""},
+{id:"gm1279589299",v:"check",thumb:"https://media.istockphoto.com/id/1279589299/photo/asian-business-people-working-with-laptop-searching-data-for-business-startup-plan-and.jpg?s=170667a&w=0&k=20&c=8rZhnXlANHelN2rZSt3wQ3rqyezUkRa7ZorWUDIreLE=",url:"https://www.istockphoto.com/photo/asian-business-people-working-with-laptop-searching-data-for-business-startup-plan-gm1279589299-378144407",d:"Asian business people working with laptop, startup planning",s:"Open Plan",r:"apac",b:""},
+{id:"gm1832441871",v:"check",thumb:"https://media.istockphoto.com/id/1832441871/photo/indian-man-is-standing-in-front-of-colleagues-that-are-using-laptop-group-of-office-workers.jpg?s=170667a&w=0&k=20&c=vjJwtwtBAy-5V7SrIIE0t8HEI2jts-VpnLnOE4fZdiI=",url:"https://www.istockphoto.com/photo/indian-man-is-standing-in-front-of-colleagues-that-are-using-laptop-group-of-office-gm1832441871-550865151",d:"Indian man standing in front of colleagues using laptop",s:"Open Plan",r:"indian",b:""},
+{id:"gm1390983877",v:"check",thumb:"https://media.istockphoto.com/id/1390983877/photo/group-of-colleagues-hanging-out-while-co-working-in-a-modern-office-space.jpg?s=170667a&w=0&k=20&c=EL0S-TMy-NzycBbcrOlx1-7ioWdwwcTNQn9iDk67t-Y=",url:"https://www.istockphoto.com/photo/group-of-colleagues-hanging-out-while-co-working-in-a-modern-office-space-gm1390983877-447757422",d:"Group of colleagues coworking in modern office space",s:"Open Plan",r:"diverse",b:""},
+{id:"gm2094337676",v:"check",thumb:"https://media.istockphoto.com/id/2094337676/photo/diverse-team-working-together-in-modern-co-working-space.jpg?s=170667a&w=0&k=20&c=eSknsmcB1H-x9kVmjhViD5nRfoA34DwSqjgoRQ_gzWk=",url:"https://www.istockphoto.com/photo/diverse-team-working-together-in-modern-co-working-space-gm2094337676-565992885",d:"Diverse team working together in modern coworking space",s:"Open Plan",r:"diverse",b:""},
+{id:"gm1409409242",v:"check",thumb:"https://media.istockphoto.com/id/1409409242/photo/well-dressed-male-executive-using-phone-inside-airport-terminal-waiting-area.jpg?s=170667a&w=0&k=20&c=bizUT-Y-zxj2oRVoMg-1F79LUmpC3tljo0dkUt1wY60=",url:"https://www.istockphoto.com/photo/well-dressed-male-executive-using-phone-inside-airport-terminal-waiting-area-gm1409409242-459960352",d:"Asian Chinese executive with laptop at airport terminal",s:"Airport",r:"chinese",b:""},
+{id:"gm1158352952",v:"check",thumb:"https://media.istockphoto.com/id/1158352952/photo/freelance-businessman-working-in-cafe-drinking-coffee.jpg?s=170667a&w=0&k=20&c=WxdFaSKAoYQ0YycMLJ-4kFvH3PCZu2Bmy6XRZtg8w2Q=",url:"https://www.istockphoto.com/photo/freelance-businessman-working-in-cafe-drinking-coffee-gm1158352952-316384494",d:"Chinese freelance businessman working in cafe",s:"Coffee Shop",r:"chinese",b:""},
+{id:"gm1055430732",v:"check",thumb:"https://media.istockphoto.com/id/1055430732/photo/serious-and-boring-face-of-man-work-on-laptop.jpg?s=170667a&w=0&k=20&c=WMjsxhluhSyUBbDl6zX5tqylSO1wpkW3ahM3Fz0t5Nc=",url:"https://www.istockphoto.com/photo/serious-and-boring-face-of-man-work-on-laptop-gm1055430732-282017890",d:"Serious Asian/Indian man working on laptop",s:"Coffee Shop",r:"indian",b:""},
+{id:"gm1289179883",v:"check",thumb:"https://media.istockphoto.com/id/1289179883/photo/freelance-work-happy-millennial-indian-man-working-on-computer-at-home-office.jpg?s=170667a&w=0&k=20&c=LW3T3G9HAfHZFubo5m2y69lL7OpfplknHxk3TO6ROzI=",url:"https://www.istockphoto.com/photo/freelance-work-happy-millennial-indian-man-working-on-computer-at-home-office-gm1289179883-384931857",d:"Happy millennial Indian man at home office desk",s:"Home Office",r:"indian",b:""},
+{id:"gm1338933252",v:"check",thumb:"https://media.istockphoto.com/id/1338933252/photo/japanese-and-chinese-business-people-looking-at-documents-at-a-meeting.jpg?s=170667a&w=0&k=20&c=w2A1zxk9u961abyO-Jc58HSw3ePoWjtj24LjdudairQ=",url:"https://www.istockphoto.com/photo/japanese-and-chinese-business-people-looking-at-documents-at-a-meeting-gm1338933252-419392013",d:"Japanese and Chinese business people at meeting",s:"Conference Room",r:"japanese",b:""},
+{id:"gm1386479159",v:"check",thumb:"https://media.istockphoto.com/id/1386479159/photo/staff-having-a-meeting-in-an-office.jpg?s=170667a&w=0&k=20&c=F_3gaZiDoMIZcR1yyjwAQsvh4N1xIxlW3F6fF5lFu-M=",url:"https://www.istockphoto.com/photo/staff-having-a-meeting-in-an-office-gm1386479159-444718157",d:"Staff having a meeting in a Japanese office",s:"Conference Room",r:"japanese",b:""},
+{id:"gm1353983651",v:"check",thumb:"https://media.istockphoto.com/id/1353983651/photo/diverse-multi-ethnic-group-of-professional-businesspeople-meeting-in-the-modern-office.jpg?s=170667a&w=0&k=20&c=Km8tkZMotPFiTZlZ9Rk5Utf1GEDFT3swvq7EIbq-05A=",url:"https://www.istockphoto.com/photo/diverse-multi-ethnic-group-of-professional-businesspeople-meeting-in-the-modern-gm1353983651-428930518",d:"Diverse multiethnic group in modern conference room",s:"Conference Room",r:"diverse",b:""},
+{id:"gm2161111602",v:"check",thumb:"https://media.istockphoto.com/id/2161111602/photo/happy-multiracial-business-team-talking-on-a-meeting-in-the-office.jpg?s=170667a&w=0&k=20&c=ExT_4eSt-KOECFhPB1mfu3yHuN1nADBz2L5St7OEn8U=",url:"https://www.istockphoto.com/photo/happy-multiracial-business-team-talking-on-a-meeting-in-the-office-gm2161111602-581580860",d:"Happy multiracial business team at meeting",s:"Conference Room",r:"diverse",b:""},
+{id:"gm981796292",v:"check",thumb:"https://media.istockphoto.com/id/981796292/photo/group-of-diversity-people-team-smiling-and-cheerful-in-success-work-with-laptop-at-modern.jpg?s=170667a&w=0&k=20&c=k_Pro0TxEbhsc1_naSKlCHhHQIeYPzvCg4TTwK106NE=",url:"https://www.istockphoto.com/photo/group-of-diversity-people-team-smiling-and-cheerful-in-success-work-with-laptop-at-gm981796292-266634304",d:"Diverse team celebrating with laptop in modern office",s:"Conference Room",r:"diverse",b:""},
+{id:"gm1257247085",v:"check",thumb:"https://media.istockphoto.com/id/1257247085/photo/screen-of-asian-businessman-talking-while-video-call-or-virtual-meeting-in-office-front-view.jpg?s=170667a&w=0&k=20&c=OrqVV5pwTol1uMio4PJY63N4W6I3XvmlCnOvnGCNATw=",url:"https://www.istockphoto.com/photo/screen-of-asian-businessman-talking-while-video-call-or-virtual-meeting-in-office-gm1257247085-368391431",d:"Asian businessman on video call in office",s:"Corporate Office",r:"apac",b:""},
+{id:"gm475569864",v:"check",thumb:"https://media.istockphoto.com/id/475569864/photo/lets-action-that-plan.jpg?s=170667a&w=0&k=20&c=tPODApHDjr38IVuSDIpdzBA9XrCyEmzzCerb_aVATrM=",url:"https://www.istockphoto.com/photo/lets-action-that-plan-gm475569864-66029971",d:"Japanese creative team discussing project on laptop",s:"Conference Room",r:"japanese",b:""},
+{id:"gm1002237834",v:"check",thumb:"https://media.istockphoto.com/id/1002237834/photo/young-fashion-business-woman-using-laptop-at-sidewalk-cafe.jpg?s=170667a&w=0&k=20&c=kswktpA6DcjURysL_EPHWkTfI9cFuLeKgUj9_NSw4-8=",url:"https://www.istockphoto.com/photo/young-fashion-business-woman-using-laptop-at-sidewalk-cafe-gm1002237834-270855504",d:"Young business woman using laptop at sidewalk cafe",s:"Coffee Shop",r:"diverse",b:""},
+];
+let aR='all',aV='all';const sel=new Set();
+function render(){
+  const g=document.getElementById('grid');g.innerHTML='';let v=0,pc=0,cs='';
+  const order=["japanese","chinese","indian","apac","diverse"];
+  const sorted=[...I].sort((a,b)=>{const vo={'pass':0,'check':1,'fail':2};return vo[(a.v||'pass')]- vo[(b.v||'pass')]||order.indexOf(a.r)-order.indexOf(b.r)||a.s.localeCompare(b.s)});
+  sorted.forEach(i=>{
+    const vv=i.v||'pass';
+    if(vv==='pass')pc++;
+    const showR=aR==='all'||i.r===aR;
+    const showV=aV==='all'||vv===aV;
+    if(!showR||!showV)return;
+    const label=i.r.charAt(0).toUpperCase()+i.r.slice(1);
+    const secKey=label+' — '+i.s;
+    if(secKey!==cs){cs=secKey;const h=document.createElement('div');h.className='sh';h.textContent=(vv==='check'?'NEEDS CHECK — ':'')+label+' — '+i.s;g.appendChild(h);}
+    v++;
+    const badgeCls=vv==='check'?' check':vv==='fail'?' fail':i.b?' branded':'';
+    const badgeText=vv==='check'?'CHECK':vv==='fail'?'MAC':i.b||'PC';
+    const c=document.createElement('div');c.className='card'+(vv==='check'?' check-card':'')+(sel.has(i.id)?' selected':'');c.dataset.id=i.id;c.onclick=()=>{sel.has(i.id)?sel.delete(i.id):sel.add(i.id);upd()};
+    c.innerHTML=`<div class="iw"><img src="${i.thumb}" alt="${i.d}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';this.parentElement.style.background='#1a1a1a'"><div class="badge${badgeCls}">${badgeText}</div><div class="chk"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7L6 10L11 4" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div><div class="ci"><div class="d">${i.d}</div><div class="cm"><span class="t s">${i.s}</span><span class="t r">${i.r}</span>${i.b?`<span class="t b">${i.b}</span>`:''}</div><a href="${i.url}" target="_blank" onclick="event.stopPropagation()">View on iStock →</a></div>`;
+    g.appendChild(c);
+  });
+  document.getElementById('vc').textContent=v;
+  document.getElementById('tc').textContent=I.length;
+  document.getElementById('pass-count').textContent=pc;
+}
+function upd(){
+  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('selected',sel.has(c.dataset.id)));
+  document.getElementById('sc').textContent=sel.size;
+  document.getElementById('sc0').textContent=sel.size;
+  document.getElementById('xbar').classList.toggle('vis',sel.size>0);
+}
+function clearSel(){sel.clear();upd()}
+function exportSel(){
+  const s=I.filter(i=>sel.has(i.id));
+  const l=document.getElementById('ml');l.innerHTML='';
+  document.getElementById('mt').textContent=s.length+' Selected';
+  s.forEach(i=>{const li=document.createElement('li');li.innerHTML=`<div class="ld">${i.d}</div><div class="lm">${i.r} · ${i.s}${i.b?' · '+i.b:''}</div><a href="${i.url}" target="_blank">${i.url}</a>`;l.appendChild(li)});
+  document.getElementById('modal').classList.add('open');
+}
+function copyLinks(){const s=I.filter(i=>sel.has(i.id)).map(i=>i.url).join('\n');navigator.clipboard.writeText(s).then(()=>toast('Links copied'))}
+function copyCSV(){const s=I.filter(i=>sel.has(i.id));const h='Description,URL,Region,Setting,Brand';const r=s.map(i=>`"${i.d}","${i.url}","${i.r}","${i.s}","${i.b||'PC'}"`);navigator.clipboard.writeText([h,...r].join('\n')).then(()=>toast('CSV copied'))}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+document.querySelectorAll('[data-verdict]').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('[data-verdict]').forEach(x=>x.classList.remove('on'));b.classList.add('on');aV=b.dataset.verdict;render()})});
+document.querySelectorAll('[data-region]').forEach(b=>{b.addEventListener('click',()=>{document.querySelectorAll('[data-region]').forEach(x=>x.classList.remove('on'));b.classList.add('on');aR=b.dataset.region;render()})});
+render();
+</script>
+</body>
+</html>
